@@ -25,6 +25,7 @@ const char * const _PyParser_TokenNames[] = {
     "STAR",
     "SLASH",
     "VBAR",
+    "PIPEGREATER",
     "AMPER",
     "LESS",
     "GREATER",
@@ -187,6 +188,7 @@ _PyToken_TwoChars(int c1, int c2)
     case '|':
         switch (c2) {
         case '=': return VBAREQUAL;
+        case '>': return PIPEGREATER;
         }
         break;
     }

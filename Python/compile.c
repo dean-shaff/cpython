@@ -1709,7 +1709,7 @@ compiler_codegen(struct compiler *c, mod_ty mod)
 }
 
 static int
-compiler_enter_anonymous_scope(struct compiler* c, mod_ty mod)
+compiler_enter_anonymous_scope(struct compiler *c, mod_ty mod)
 {
     _Py_DECLARE_STR(anon_module, "<module>");
     RETURN_IF_ERROR(
@@ -4193,6 +4193,9 @@ addop_binary(struct compiler *c, location loc, operator_ty binop,
         case FloorDiv:
             oparg = inplace ? NB_INPLACE_FLOOR_DIVIDE : NB_FLOOR_DIVIDE;
             break;
+        // case PipeGreater:
+        //     oparg = inplace ? NB_INPLACE_ADD : NB_ADD;  // Use same as Add for now
+        //     break;
         default:
             PyErr_Format(PyExc_SystemError, "%s op %d should not be possible",
                          inplace ? "inplace" : "binary", binop);

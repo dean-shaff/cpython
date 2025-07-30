@@ -141,6 +141,8 @@ void _PyAST_Fini(PyInterpreterState *interp)
     Py_CLEAR(state->Or_type);
     Py_CLEAR(state->ParamSpec_type);
     Py_CLEAR(state->Pass_type);
+    Py_CLEAR(state->PipeGreater_singleton);
+    Py_CLEAR(state->PipeGreater_type);
     Py_CLEAR(state->Pow_singleton);
     Py_CLEAR(state->Pow_type);
     Py_CLEAR(state->RShift_singleton);
@@ -3835,6 +3837,21 @@ add_ast_annotations(struct ast_state *state)
         return 0;
     }
     Py_DECREF(FloorDiv_annotations);
+    PyObject *PipeGreater_annotations = PyDict_New();
+    if (!PipeGreater_annotations) return 0;
+    cond = PyObject_SetAttrString(state->PipeGreater_type, "_field_types",
+                                  PipeGreater_annotations) == 0;
+    if (!cond) {
+        Py_DECREF(PipeGreater_annotations);
+        return 0;
+    }
+    cond = PyObject_SetAttrString(state->PipeGreater_type, "__annotations__",
+                                  PipeGreater_annotations) == 0;
+    if (!cond) {
+        Py_DECREF(PipeGreater_annotations);
+        return 0;
+    }
+    Py_DECREF(PipeGreater_annotations);
     PyObject *Invert_annotations = PyDict_New();
     if (!Invert_annotations) return 0;
     cond = PyObject_SetAttrString(state->Invert_type, "_field_types",
@@ -5963,7 +5980,7 @@ init_types(struct ast_state *state)
     if (!state->Or_singleton) return -1;
     state->operator_type = make_type(state, "operator", state->AST_type, NULL,
                                      0,
-        "operator = Add | Sub | Mult | MatMult | Div | Mod | Pow | LShift | RShift | BitOr | BitXor | BitAnd | FloorDiv");
+        "operator = Add | Sub | Mult | MatMult | Div | Mod | Pow | LShift | RShift | BitOr | BitXor | BitAnd | FloorDiv | PipeGreater");
     if (!state->operator_type) return -1;
     if (add_attributes(state, state->operator_type, NULL, 0) < 0) return -1;
     state->Add_type = make_type(state, "Add", state->operator_type, NULL, 0,
@@ -6056,6 +6073,14 @@ init_types(struct ast_state *state)
                                                   *)state->FloorDiv_type, NULL,
                                                   NULL);
     if (!state->FloorDiv_singleton) return -1;
+    state->PipeGreater_type = make_type(state, "PipeGreater",
+                                        state->operator_type, NULL, 0,
+        "PipeGreater");
+    if (!state->PipeGreater_type) return -1;
+    state->PipeGreater_singleton = PyType_GenericNew((PyTypeObject
+                                                     *)state->PipeGreater_type,
+                                                     NULL, NULL);
+    if (!state->PipeGreater_singleton) return -1;
     state->unaryop_type = make_type(state, "unaryop", state->AST_type, NULL, 0,
         "unaryop = Invert | Not | UAdd | USub");
     if (!state->unaryop_type) return -1;
@@ -9453,6 +9478,8 @@ PyObject* ast2obj_operator(struct ast_state *state, struct validator *vstate,
             return Py_NewRef(state->BitAnd_singleton);
         case FloorDiv:
             return Py_NewRef(state->FloorDiv_singleton);
+        case PipeGreater:
+            return Py_NewRef(state->PipeGreater_singleton);
     }
     Py_UNREACHABLE();
 }
@@ -15087,6 +15114,14 @@ obj2ast_operator(struct ast_state *state, PyObject* obj, operator_ty* out,
         *out = FloorDiv;
         return 0;
     }
+    isinstance = PyObject_IsInstance(obj, state->PipeGreater_type);
+    if (isinstance == -1) {
+        return -1;
+    }
+    if (isinstance) {
+        *out = PipeGreater;
+        return 0;
+    }
 
     PyErr_Format(PyExc_TypeError, "expected some sort of operator, but got %R", obj);
     return -1;
@@ -17467,6 +17502,9 @@ astmodule_exec(PyObject *m)
         return -1;
     }
     if (PyModule_AddObjectRef(m, "FloorDiv", state->FloorDiv_type) < 0) {
+        return -1;
+    }
+    if (PyModule_AddObjectRef(m, "PipeGreater", state->PipeGreater_type) < 0) {
         return -1;
     }
     if (PyModule_AddObjectRef(m, "unaryop", state->unaryop_type) < 0) {
