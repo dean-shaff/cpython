@@ -30,6 +30,8 @@
      - ``"/"``
    * - .. data:: VBAR
      - ``"|"``
+   * - .. data:: PIPE
+     - ``"|>"``
    * - .. data:: AMPER
      - ``"&"``
    * - .. data:: LESS

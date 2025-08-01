@@ -795,6 +795,7 @@ shift_expr[expr_ty]:
 sum[expr_ty]:
     | a=sum '+' b=term { _PyAST_BinOp(a, Add, b, EXTRA) }
     | a=sum '-' b=term { _PyAST_BinOp(a, Sub, b, EXTRA) }
+    | a=sum '|>' b=term { _PyAST_Call(a, CHECK(asdl_expr_seq*, (asdl_expr_seq*)_PyPegen_singleton_seq(p, b)), NULL, EXTRA) }
     | term
 
 term[expr_ty]:
